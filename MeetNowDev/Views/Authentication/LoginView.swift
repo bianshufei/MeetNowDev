@@ -7,6 +7,12 @@ import SwiftUI
 /// 2. 登录状态管理
 /// 3. 用户协议展示
 /// 4. 登录成功后跳转到用户信息设置页面
+
+enum UserDefaultsKeys {
+    static let userPhoneNumber = "userPhoneNumber"
+    static let hasCompletedUserInfo = "hasCompletedUserInfo"
+}
+
 struct LoginView: View {
     /// 用户输入的手机号
     @State private var phoneNumber: String = ""
@@ -14,8 +20,8 @@ struct LoginView: View {
     @State private var isLoading: Bool = false
     /// 控制手机号格式错误提示的显示状态
     @State private var showInvalidPhoneAlert: Bool = false
-    /// 控制是否导航到角色选择页面
-    @State private var navigateToRoleSelection: Bool = false
+    /// 导航路径管理
+    @State private var navigationPath = NavigationPath()
     
     /// 验证手机号格式是否符合要求
     /// - Parameter phone: 待验证的手机号
@@ -27,7 +33,7 @@ struct LoginView: View {
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack(path: $navigationPath) {
             VStack(spacing: 30) {
                 // Logo区域
                 Image(systemName: "person.circle.fill")
@@ -63,10 +69,10 @@ struct LoginView: View {
                 Button(action: {
                     if isValidPhoneNumber(phoneNumber) {
                         isLoading = true
-                        // 模拟登录过程
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            UserDefaults.standard.set(phoneNumber, forKey: UserDefaultsKeys.userPhoneNumber)
                             isLoading = false
-                            navigateToRoleSelection = true
+                            navigationPath.append(true)
                         }
                     } else {
                         showInvalidPhoneAlert = true
@@ -113,7 +119,7 @@ struct LoginView: View {
                 Text("请输入正确的手机号码")
             }
             .navigationBarHidden(true)
-            .navigationDestination(isPresented: $navigateToRoleSelection) {
+            .navigationDestination(for: Bool.self) { _ in
                 UserInfoSetupView()
             }
         }

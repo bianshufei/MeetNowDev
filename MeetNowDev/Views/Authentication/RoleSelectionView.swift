@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RoleSelectionView: View {
     @State private var selectedRole: UserRole? = nil
+    @State private var navigateToMain = false
     
     enum UserRole {
         case poster // 发单人
@@ -45,7 +46,24 @@ struct RoleSelectionView: View {
             
             // 确认按钮
             Button(action: {
-                // TODO: 保存用户角色选择并跳转到主页
+                if let role = selectedRole {
+                    let userDefaults = UserDefaults.standard
+                    // 保存用户角色选择
+                    userDefaults.set(role == .poster ? "poster" : "taker", forKey: "userRole")
+                    // 保存用户角色选择状态
+                    userDefaults.set(true, forKey: "hasSelectedRole")
+                    
+                    // 创建用户配置文件
+                    let _ = UserProfile(
+                        nickname: UserDefaults.standard.string(forKey: "userNickname") ?? "",
+                        phoneNumber: UserDefaults.standard.string(forKey: UserDefaultsKeys.userPhoneNumber) ?? "",
+                        gender: UserDefaults.standard.string(forKey: "userGender") == "male" ? .male : .female,
+                        age: UserDefaults.standard.integer(forKey: "userAge"),
+                        role: role
+                    )
+                    
+                    navigateToMain = true
+                }
             }) {
                 Text("确认")
                     .frame(maxWidth: .infinity)
@@ -71,6 +89,9 @@ struct RoleSelectionView: View {
             .padding(.bottom, 30)
         }
         .padding()
+        .navigationDestination(isPresented: $navigateToMain) {
+            MainView()
+        }
     }
 }
 

@@ -10,7 +10,13 @@ struct MainView: View {
     /// 当前选中的标签页索引
     @State private var selectedTab = 0
     /// 当前用户角色（发单人/接单人）
-    @State private var userRole: RoleSelectionView.UserRole = .poster
+    @State private var userRole: RoleSelectionView.UserRole = {
+        // 从UserDefaults中读取用户角色
+        if let roleString = UserDefaults.standard.string(forKey: "userRole") {
+            return roleString == "poster" ? .poster : .taker
+        }
+        return .poster // 默认为发单人
+    }()
     /// 用户档案数据，目前使用模拟数据，后续需要从服务器获取
     @StateObject private var userProfile = UserProfile.mock
     

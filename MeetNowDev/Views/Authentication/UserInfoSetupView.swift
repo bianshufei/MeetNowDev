@@ -4,6 +4,7 @@ struct UserInfoSetupView: View {
     @State private var selectedGender: Gender = .male
     @State private var birthDate = Date()
     @State private var navigateToRoleSelection = false
+    private var phoneNumber: String = UserDefaults.standard.string(forKey: UserDefaultsKeys.userPhoneNumber) ?? ""
     
     // 自定义日期格式化器
     private var dateFormatter: DateFormatter {
@@ -85,8 +86,22 @@ struct UserInfoSetupView: View {
             
             // 确认按钮
             Button(action: {
-                // TODO: 保存用户信息
-                navigateToRoleSelection = true
+                // 保存用户基本信息
+                let userDefaults = UserDefaults.standard
+                // 保存基本信息
+                userDefaults.set(selectedGender == .male ? "male" : "female", forKey: "userGender")
+                userDefaults.set(birthDate, forKey: "userBirthDate")
+                
+                // 添加测试数据
+                userDefaults.set("测试用户", forKey: "userNickname")
+                userDefaults.set(phoneNumber, forKey: UserDefaultsKeys.userPhoneNumber)
+                userDefaults.set(age, forKey: "userAge")
+                userDefaults.set(true, forKey: UserDefaultsKeys.hasCompletedUserInfo)
+                
+                // 延迟一小段时间后触发导航，确保数据保存完成
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    navigateToRoleSelection = true
+                }
             }) {
                 Text("下一步")
                     .font(.headline)

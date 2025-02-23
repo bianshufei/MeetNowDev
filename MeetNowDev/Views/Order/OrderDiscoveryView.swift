@@ -47,7 +47,7 @@ struct OrderDiscoveryView: View {
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
                 // 筛选条件栏
                 HStack(spacing: 16) {
@@ -115,14 +115,14 @@ struct OrderDiscoveryView: View {
                 }
             }
             .navigationTitle("发现可参与的约见")
-            .navigationDestination(isPresented: $showOrderDetail) {
-                if let orderId = selectedOrderId {
-                    OrderDetailView(orderId: orderId, isOrderCreator: false)
-                }
-            }
             .onAppear {
                 Task {
                     await refreshOrders()
+                }
+            }
+            .navigationDestination(isPresented: $showOrderDetail) {
+                if let orderId = selectedOrderId {
+                    OrderDetailView(orderId: orderId, isOrderCreator: false)
                 }
             }
         }
