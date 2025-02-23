@@ -1,12 +1,25 @@
 import SwiftUI
 
+/// 登录视图
+/// 用户通过手机号一键登录系统
+/// 功能包括：
+/// 1. 手机号格式验证
+/// 2. 登录状态管理
+/// 3. 用户协议展示
+/// 4. 登录成功后跳转到用户信息设置页面
 struct LoginView: View {
+    /// 用户输入的手机号
     @State private var phoneNumber: String = ""
+    /// 登录加载状态
     @State private var isLoading: Bool = false
+    /// 控制手机号格式错误提示的显示状态
     @State private var showInvalidPhoneAlert: Bool = false
+    /// 控制是否导航到角色选择页面
     @State private var navigateToRoleSelection: Bool = false
     
-    // 验证手机号格式
+    /// 验证手机号格式是否符合要求
+    /// - Parameter phone: 待验证的手机号
+    /// - Returns: 手机号是否有效
     private func isValidPhoneNumber(_ phone: String) -> Bool {
         let pattern = "^1[3-9]\\d{9}$"
         let predicate = NSPredicate(format: "SELF MATCHES %@", pattern)

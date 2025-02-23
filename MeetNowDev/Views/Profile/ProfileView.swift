@@ -1,14 +1,27 @@
 import SwiftUI
 
+/// 个人中心视图
+/// 用户可以在此页面：
+/// 1. 查看和编辑个人信息（头像、昵称等）
+/// 2. 切换用户角色（发单人/接单人）
+/// 3. 管理应用设置
+/// 4. 执行退出登录操作
 struct ProfileView: View {
+    /// 当前用户角色，与主视图共享状态
     @Binding var currentRole: RoleSelectionView.UserRole
+    /// 控制角色切换确认弹窗的显示状态
     @State private var showRoleToggleAlert = false
+    /// 用户档案数据
     @State private var userProfile: UserProfile
+    /// 控制编辑个人资料页面的显示状态
     @State private var showEditProfile = false
     
+    /// 初始化个人中心视图
+    /// - Parameter currentRole: 当前用户角色的绑定值
     init(currentRole: Binding<RoleSelectionView.UserRole>) {
         _currentRole = currentRole
-        _userProfile = State(initialValue: UserProfile.mock) // 使用模拟数据，实际应从用户配置中读取
+        // 使用模拟数据初始化用户档案，实际应用中需要从用户配置或服务器获取
+        _userProfile = State(initialValue: UserProfile.mock)
     }
     
     var body: some View {

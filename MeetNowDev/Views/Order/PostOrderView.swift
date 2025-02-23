@@ -6,6 +6,7 @@ struct PostOrderView: View {
     @State private var selectedDateTime = Date()
     @State private var location = ""
     @State private var description = ""
+    @State private var budget: Double? = nil
     
     enum OrderType {
         case instant   // 即时约见
@@ -55,6 +56,10 @@ struct PostOrderView: View {
                     
                     LocationSection(
                         location: $location
+                    )
+                    
+                    BudgetSection(
+                        budget: $budget
                     )
                     
                     PublishButton()
@@ -284,6 +289,40 @@ struct ActivityTypeButton: View {
                     .stroke(isSelected ? Color.orange : Color.clear, lineWidth: 1)
             )
         }
+    }
+}
+
+// 预算输入区域
+struct BudgetSection: View {
+    @Binding var budget: Double?
+    @State private var budgetText = ""
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("活动预算（选填）")
+                .font(.headline)
+                .foregroundColor(.gray)
+            
+            TextField("请输入预算金额", text: $budgetText)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .keyboardType(.decimalPad)
+                .onChange(of: budgetText) { oldValue, newValue in
+                    if let amount = Double(newValue) {
+                        budget = amount
+                    } else {
+                        budget = nil
+                    }
+                }
+                .overlay(
+                    HStack {
+                        Text("¥")
+                            .foregroundColor(.gray)
+                            .padding(.leading, 8)
+                        Spacer()
+                    }
+                )
+        }
+        .padding(.horizontal)
     }
 }
 
