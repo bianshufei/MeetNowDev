@@ -6,6 +6,7 @@ struct ChatMessage: Identifiable {
     let lastMessage: String
     let timestamp: Date
     let isOrderCreator: Bool
+    let orderId: String
 }
 
 struct ChatListView: View {
@@ -17,7 +18,8 @@ struct ChatListView: View {
                 NavigationLink(
                     destination: ChatDetailView(
                         partnerName: message.partnerName,
-                        isOrderCreator: message.isOrderCreator
+                        isOrderCreator: message.isOrderCreator,
+                        orderId: message.orderId
                     )
                 ) {
                     ChatListItemView(message: message)

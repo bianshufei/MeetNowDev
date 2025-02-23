@@ -53,7 +53,10 @@ struct MainView: View {
             
             // MARK: - 个人中心页面
             // 显示用户个人信息、角色管理和应用设置
-            ProfileView(currentRole: $userRole)
+            ProfileView(currentRole: Binding(
+                get: { userRole },
+                set: { updateUserRole($0) }
+            ))
                 .tabItem {
                     Image(systemName: "person")
                     Text("我的")

@@ -11,7 +11,7 @@ struct OrderManagementView: View {
     let isOrderCreator: Bool
     
     /// 订单列表数据
-    @State private var orders: [Order] = []
+    @StateObject private var orderService = OrderService.shared
     /// 选中的订单状态过滤器
     @State private var selectedStatusFilter: OrderStatus = .all
     /// 是否显示订单详情
@@ -65,18 +65,13 @@ struct OrderManagementView: View {
     
     /// 根据状态过滤订单列表
     private var filteredOrders: [Order] {
-        if selectedStatusFilter == .all {
-            return orders
-        }
-        return orders.filter { $0.status == selectedStatusFilter }
+        orderService.getOrders(isOrderCreator: isOrderCreator, status: selectedStatusFilter == .all ? nil : selectedStatusFilter)
     }
     
     /// 加载订单列表
     /// 从服务器获取当前用户相关的订单数据
     private func loadOrders() {
-        // TODO: 实现从服务器获取订单列表的逻辑
-        // 目前使用模拟数据
-        orders = Order.mockOrders
+        // 订单数据已经由OrderService管理，无需额外加载
     }
 }
 
@@ -197,6 +192,10 @@ struct Order: Identifiable {
     let dateTime: Date
     let location: String
     let amount: Double
+    let creatorGender: Gender
+    let creatorAge: Int
+    let activityType: PostOrderView.ActivityType
+    let orderType: PostOrderView.OrderType
     
     var formattedDateTime: String {
         let formatter = DateFormatter()
@@ -217,7 +216,11 @@ extension Order {
             status: .inProgress,
             dateTime: Date(),
             location: "市中心图书馆",
-            amount: 50.0
+            amount: 50.0,
+            creatorGender: .male,
+            creatorAge: 22,
+            activityType: .study,
+            orderType: .scheduled
         ),
         Order(
             id: "2",
@@ -228,7 +231,86 @@ extension Order {
             status: .pending,
             dateTime: Date().addingTimeInterval(86400),
             location: "海底捞火锅店",
-            amount: 100.0
+            amount: 100.0,
+            creatorGender: .male,
+            creatorAge: 28,
+            activityType: .dining,
+            orderType: .scheduled
+        ),
+        Order(
+            id: "3",
+            title: "找人一起看展",
+            description: "周末去看梵高画展，希望找个对艺术感兴趣的伙伴",
+            creatorName: "小红",
+            takerName: nil,
+            status: .pending,
+            dateTime: Date().addingTimeInterval(172800),
+            location: "市立美术馆",
+            amount: 150.0,
+            creatorGender: .female,
+            creatorAge: 24,
+            activityType: .exhibition,
+            orderType: .scheduled
+        ),
+        Order(
+            id: "4",
+            title: "即时约饭",
+            description: "公司附近找人一起吃午饭",
+            creatorName: "小李",
+            takerName: nil,
+            status: .pending,
+            dateTime: Date().addingTimeInterval(3600),
+            location: "金融中心美食广场",
+            amount: 80.0,
+            creatorGender: .male,
+            creatorAge: 30,
+            activityType: .dining,
+            orderType: .instant
+        ),
+        Order(
+            id: "5",
+            title: "运动伙伴",
+            description: "找人一起打羽毛球",
+            creatorName: "小美",
+            takerName: nil,
+            status: .pending,
+            dateTime: Date().addingTimeInterval(7200),
+            location: "星光体育馆",
+            amount: 60.0,
+            creatorGender: .female,
+            creatorAge: 25,
+            activityType: .sports,
+            orderType: .instant
+        ),
+        Order(
+            id: "6",
+            title: "咖啡约聊",
+            description: "周末下午在咖啡厅聊聊天",
+            creatorName: "小婷",
+            takerName: nil,
+            status: .pending,
+            dateTime: Date().addingTimeInterval(259200),
+            location: "星巴克咖啡厅",
+            amount: 70.0,
+            creatorGender: .female,
+            creatorAge: 27,
+            activityType: .companion,
+            orderType: .scheduled
+        ),
+        Order(
+            id: "7",
+            title: "逛街购物",
+            description: "找人一起去商场逛街，给生活添点乐趣",
+            creatorName: "小雨",
+            takerName: nil,
+            status: .pending,
+            dateTime: Date().addingTimeInterval(345600),
+            location: "环球购物中心",
+            amount: 200.0,
+            creatorGender: .female,
+            creatorAge: 23,
+            activityType: .companion,
+            orderType: .scheduled
         )
     ]
 }

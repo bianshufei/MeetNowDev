@@ -303,7 +303,12 @@ struct BudgetSection: View {
                 .font(.headline)
                 .foregroundColor(.gray)
             
-            TextField("请输入预算金额", text: $budgetText)
+            Text("此金额为约见活动的预算参考，不是接单酬劳")
+                .font(.caption)
+                .foregroundColor(.gray)
+                .padding(.bottom, 4)
+            
+            TextField("请输入约见活动的预算金额", text: $budgetText)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .keyboardType(.decimalPad)
                 .onChange(of: budgetText) { oldValue, newValue in

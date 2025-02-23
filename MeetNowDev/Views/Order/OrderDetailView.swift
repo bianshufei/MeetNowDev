@@ -15,6 +15,8 @@ struct OrderDetailView: View {
     
     /// 订单详情数据
     @State private var order: Order? = nil
+    @StateObject private var orderService = OrderService.shared
+    
     /// 是否显示聊天界面
     @State private var showChatView = false
     /// 是否显示订单确认弹窗
@@ -23,10 +25,6 @@ struct OrderDetailView: View {
     @State private var showCancelAlert = false
     /// 是否显示评价视图
     @State private var showRatingView = false
-    /// 是否显示接单确认弹窗
-    @State private var showTakeOrderAlert = false
-    /// 是否正在处理接单请求
-    @State private var isProcessingTakeOrder = false
     
     var body: some View {
         ScrollView {
@@ -47,16 +45,65 @@ struct OrderDetailView: View {
                         role: isOrderCreator ? "接单人" : "发单人"
                     )
                     
-                    // 操作按钮
-                    ActionButtonsSection(
-                        order: order,
-                        isOrderCreator: isOrderCreator,
-                        onChat: { showChatView = true },
-                        onConfirm: { showConfirmationAlert = true },
-                        onCancel: { showCancelAlert = true },
-                        onRate: { showRatingView = true },
-                        onTakeOrder: { showTakeOrderAlert = true }
-                    )
+                    // 聊天按钮
+                    if order.status != .cancelled {
+                        Button(action: { showChatView = true }) {
+                            HStack {
+                                Image(systemName: "message")
+                                Text("联系\(isOrderCreator ? "接单人" : "发单人")")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                        }
+                    }
+                    
+                    // 确认完成按钮（仅在进行中状态显示）
+                    if order.status == .inProgress {
+                        Button(action: { showConfirmationAlert = true }) {
+                            HStack {
+                                Image(systemName: "checkmark.circle")
+                                Text("确认完成")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.green)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                        }
+                    }
+                    
+                    // 评价按钮（仅在已完成状态显示）
+                    if order.status == .completed {
+                        Button(action: { showRatingView = true }) {
+                            HStack {
+                                Image(systemName: "star")
+                                Text("评价约见")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.orange)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                        }
+                    }
+                    
+                    // 取消订单按钮
+                    if order.status == .pending || (order.status == .inProgress && isOrderCreator) {
+                        Button(action: { showCancelAlert = true }) {
+                            HStack {
+                                Image(systemName: "xmark.circle")
+                                Text("取消订单")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.red)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                        }
+                    }
                 }
                 .padding()
             } else {
@@ -69,7 +116,8 @@ struct OrderDetailView: View {
             if let order = order {
                 ChatDetailView(
                     partnerName: isOrderCreator ? (order.takerName ?? "接单人") : order.creatorName,
-                    isOrderCreator: isOrderCreator
+                    isOrderCreator: isOrderCreator,
+                    orderId: order.id
                 )
             }
         }
@@ -94,50 +142,32 @@ struct OrderDetailView: View {
         } message: {
             Text("确认取消该订单？")
         }
-        .alert("接单确认", isPresented: $showTakeOrderAlert) {
-            Button("确认接单", role: .none) {
-                takeOrder()
-            }
-            Button("取消", role: .cancel) {}
-        } message: {
-            Text("确认接受该订单吗？接单后需要按约定完成约见。")
-        }
         .onAppear {
             loadOrderDetail()
-        }
-    }
-    
-    /// 接单操作
-    /// 更新订单状态为进行中，并将当前用户设置为接单人
-    private func takeOrder() {
-        isProcessingTakeOrder = true
-        
-        // TODO: 实现接单逻辑
-        // 1. 调用服务器API接受订单
-        // 2. 更新订单状态为进行中
-        // 3. 更新接单人信息
-        
-        // 模拟网络请求延迟
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            order?.status = .inProgress
-            order?.takerName = "当前用户" // TODO: 替换为实际的用户名
-            isProcessingTakeOrder = false
         }
     }
     
     /// 加载订单详情
     /// 从服务器获取指定订单的详细信息
     private func loadOrderDetail() {
-        // TODO: 实现从服务器获取订单详情的逻辑
-        // 目前使用模拟数据
-        order = Order.mockOrders.first { $0.id == orderId }
+        order = orderService.getOrder(by: orderId)
     }
     
     /// 更新订单状态
     /// - Parameter newStatus: 新的订单状态
     private func updateOrderStatus(_ newStatus: OrderStatus) {
-        // TODO: 实现更新订单状态的逻辑
-        order?.status = newStatus
+        orderService.updateOrderStatus(orderId: orderId, newStatus: newStatus) { result in
+            switch result {
+            case .success:
+                // 更新本地订单数据
+                order = orderService.getOrder(by: orderId)
+                // TODO: 发送系统消息到聊天界面
+                _ = "订单状态已更新为：\(newStatus.displayName)"
+            case .failure(let error):
+                // TODO: 显示错误提示
+                print(error.localizedDescription)
+            }
+        }
     }
 }
 
@@ -246,34 +276,49 @@ struct ActionButtonsSection: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            // 接单按钮
+            // 接单按钮和沟通按钮
             if !isOrderCreator && order.status == .pending {
-                Button(action: onChat) {
-                    HStack {
-                        Image(systemName: "message")
-                        Text("与发单人沟通")
+                VStack(spacing: 12) {
+                    Button(action: onChat) {
+                        HStack {
+                            Image(systemName: "message")
+                            Text("与发单人沟通")
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.orange)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.orange)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
+                    
+                    Button(action: onTakeOrder) {
+                        HStack {
+                            Image(systemName: "checkmark.circle")
+                            Text("确认接单")
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.green)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                    }
+                    .opacity(0.6)
+                    .overlay(
+                        VStack(spacing: 4) {
+                            Text("请先与发单人沟通")
+                                .font(.caption)
+                            Text("达成一致后再接单")
+                                .font(.caption)
+                        }
+                        .foregroundColor(.gray)
+                        .padding(.top, 8)
+                        , alignment: .bottom
+                    )
                 }
-                .overlay(
-                    VStack(spacing: 4) {
-                        Text("请先与发单人沟通")
-                            .font(.caption)
-                        Text("达成一致后再接单")
-                            .font(.caption)
-                    }
-                    .foregroundColor(.gray)
-                    .padding(.top, 8)
-                    , alignment: .bottom
-                )
             }
             
             // 聊天按钮
-            if order.status != .cancelled {
+            if order.status != .cancelled && (isOrderCreator || order.status == .inProgress) {
                 Button(action: onChat) {
                     HStack {
                         Image(systemName: "message")
